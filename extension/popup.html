@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Grok X Scheduler</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <main>
+    <header>
+      <div class="logo">𝕏</div>
+      <div><h1>Grok X Scheduler</h1><p>AI-assisted posting</p></div>
+    </header>
+    <div id="status" class="status">Checking backend…</div>
+    <button id="connect" class="secondary">Connect X account</button>
+    <label for="apiBase">Backend URL</label>
+    <input id="apiBase" type="url" value="http://127.0.0.1:8787">
+    <label for="topics">Topics</label>
+    <textarea id="topics" rows="3">Backend engineering, AWS, system design, AI</textarea>
+    <label for="tone">Writing style</label>
+    <input id="tone" value="technical and conversational">
+    <label for="times">Posting times (24-hour, comma-separated)</label>
+    <input id="times" value="09:00,14:00,19:00">
+    <label for="timezone">Timezone (IANA)</label>
+    <input id="timezone" value="Asia/Kolkata">
+    <div class="row">
+      <button id="save" class="secondary">Save settings</button>
+      <button id="generate">Generate draft</button>
+    </div>
+    <section id="draftSection" hidden>
+      <label for="draft">Draft preview</label>
+      <textarea id="draft" rows="5"></textarea>
+      <p class="hint">Automatic scheduling publishes generated content without per-post approval. Review your topics and style carefully.</p>
+    </section>
+    <button id="enable" class="primary">Enable auto-posting</button>
+    <button id="disable" class="danger">Pause auto-posting</button>
+    <section>
+      <div class="sectionTitle">Recent posts</div>
+      <div id="posts" class="posts">No posts loaded.</div>
+    </section>
+    <p id="message" role="status" class="message"></p>
+    <footer>Uses official APIs. No simulated cursor movement or anti-detection behavior.</footer>
+  </main>
+  <script src="popup.js"></script>
+</body>
+</html>

@@ -1,0 +1,16 @@
+{
+  "manifest_version": 3,
+  "name": "Grok X Scheduler",
+  "version": "1.0.0",
+  "description": "Generate posts with Grok and schedule publishing through the official X API.",
+  "action": {
+    "default_title": "Grok X Scheduler",
+    "default_popup": "popup.html"
+  },
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "permissions": ["storage", "alarms"],
+  "host_permissions": ["http://127.0.0.1:8787/*", "http://localhost:8787/*"]
+}
