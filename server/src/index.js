@@ -11,6 +11,8 @@ app.disable('x-powered-by');
 app.use(express.json({ limit: '32kb' }));
 
 app.use((req, res, next) => {
+  // Do not set a restrictive CSP here. Chrome DevTools probes the local OAuth endpoint
+  // and a default-src 'none' policy blocks the required fetches.
   const origin = req.headers.origin;
   const allowed = APP_CONFIG.allowedOrigins;
 
@@ -32,6 +34,9 @@ app.use((req, res, next) => {
 
 const asyncRoute = (fn) => (req, res, next) => Promise.resolve(fn(req, res, next)).catch(next);
 
+app.get('/',(req,res)=>{
+  res.send(`Grok X Scheduler API listening at http://${APP_CONFIG.host}:${APP_CONFIG.port}`);
+})
 app.get('/health', (_req, res) => res.json({ ok: true, service: 'grok-x-scheduler' }));
 app.use('/api', apiRoutes);
 app.use('/auth', authRoutes);
