@@ -18,6 +18,10 @@
     <input id="apiBase" type="url" value="http://127.0.0.1:8787">
     <label for="topics">Topics</label>
     <textarea id="topics" rows="3">Backend engineering, AWS, system design, AI</textarea>
+    <label for="postsPerDay">Posts per day</label>
+    <input id="postsPerDay" type="number" min="1" max="8" value="3">
+    <label for="replyLimitPerDay">Reply limit per day</label>
+    <input id="replyLimitPerDay" type="number" min="1" max="10" value="10">
     <label for="tone">Writing style</label>
     <input id="tone" value="technical and conversational">
     <label for="times">Posting times (24-hour, comma-separated)</label>
@@ -31,12 +35,16 @@
     <section id="draftSection" hidden>
       <label for="draft">Draft preview</label>
       <textarea id="draft" rows="5"></textarea>
+      <div class="row compact">
+        <button id="saveDraft" class="secondary">Save draft</button>
+        <button id="postNow" class="primary">Post now</button>
+      </div>
       <p class="hint">Automatic scheduling publishes generated content without per-post approval. Review your topics and style carefully.</p>
     </section>
     <button id="enable" class="primary">Enable auto-posting</button>
     <button id="disable" class="danger">Pause auto-posting</button>
     <section>
-      <div class="sectionTitle">Recent posts</div>
+      <div class="sectionTitle">Queued and recent posts</div>
       <div id="posts" class="posts">No posts loaded.</div>
     </section>
     <p id="message" role="status" class="message"></p>

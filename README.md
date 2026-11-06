@@ -11,7 +11,6 @@ A personal-use Chrome extension with a Node.js backend. Grok drafts posts; the o
 - Node.js 20+
 - An xAI API key
 - An X developer app with OAuth 2.0 enabled, callback URL `http://127.0.0.1:8787/auth/x/callback`, and the required user-auth scopes for reading the authenticated user's identity and publishing posts. Confirm exact scopes and API access in the current X developer docs.
-- X API access that permits creating posts.
 
 ## 1. Configure backend
 ```bash

@@ -7,7 +7,6 @@ This project is a local-first X automation project with a backend scheduler and 
 This repo is built for automating X activity in a controlled and auditable way:
 - a Node.js backend handles scheduling, OAuth, SQLite persistence, and API logic
 - a Chrome extension provides the UI and refreshes status from the backend
-- the backend uses the official X API and keeps activity conservative and rate-limited
 
 ## Where things are
 
