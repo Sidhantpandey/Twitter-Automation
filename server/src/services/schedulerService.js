@@ -26,7 +26,9 @@ function nextScheduleDate(times, timezone, after = new Date()) {
     for (const time of times) {
       const [hh, mm] = time.split(':').map(Number);
       const targetLocal = `${dayStr} ${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}`;
-      let guess = new Date(`${dayStr}T${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}:00Z`);
+      let guess = new Date(
+        `${dayStr}T${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}:00Z`,
+      );
 
       for (let i = 0; i < 3; i += 1) {
         const p = Object.fromEntries(fmt.formatToParts(guess).map((x) => [x.type, x.value]));
@@ -45,7 +47,8 @@ function nextScheduleDate(times, timezone, after = new Date()) {
   throw new Error('Could not calculate next schedule time.');
 }
 
-export const calculateNextRun = (settings, after = new Date()) => nextScheduleDate(settings.scheduleTimes, settings.timezone, after).toISOString();
+export const calculateNextRun = (settings, after = new Date()) =>
+  nextScheduleDate(settings.scheduleTimes, settings.timezone, after).toISOString();
 
 async function queueNextIfNeeded(settings, nextRunAt) {
   const future = db.prepare("SELECT id FROM posts WHERE status='queued' LIMIT 1").get();
@@ -54,14 +57,21 @@ async function queueNextIfNeeded(settings, nextRunAt) {
   }
 
   try {
-    const recent = db.prepare('SELECT text FROM posts ORDER BY id DESC LIMIT 8').all().map((row) => row.text);
+    const recent = db
+      .prepare('SELECT text FROM posts ORDER BY id DESC LIMIT 8')
+      .all()
+      .map((row) => row.text);
     const text = await generatePost({
       topics: settings.topics,
       tone: settings.tone,
       recentPosts: recent,
     });
 
-    db.prepare("INSERT INTO posts(text,status,scheduled_for) VALUES(?,?,?)").run(text, 'queued', nextRunAt);
+    db.prepare('INSERT INTO posts(text,status,scheduled_for) VALUES(?,?,?)').run(
+      text,
+      'queued',
+      nextRunAt,
+    );
   } catch (error) {
     const message = String(error?.message || error).slice(0, 1500);
     db.prepare('UPDATE settings SET last_error=? WHERE id=1').run(message);
@@ -81,17 +91,24 @@ export const tick = async () => {
       return;
     }
 
-    const due = db.prepare("SELECT * FROM posts WHERE status='queued' AND scheduled_for <= ? ORDER BY scheduled_for LIMIT 1").get(nowIso());
+    const due = db
+      .prepare(
+        "SELECT * FROM posts WHERE status='queued' AND scheduled_for <= ? ORDER BY scheduled_for LIMIT 1",
+      )
+      .get(nowIso());
     if (!due) {
       return;
     }
 
-    db.prepare("UPDATE posts SET status='publishing', error=NULL WHERE id=? AND status='queued'").run(due.id);
+    db.prepare(
+      "UPDATE posts SET status='publishing', error=NULL WHERE id=? AND status='queued'",
+    ).run(due.id);
 
     try {
       const result = await publishPost(due.text);
-      db.prepare("UPDATE posts SET status='published', x_post_id=?, published_at=?, error=NULL WHERE id=?")
-        .run(result?.id || null, nowIso(), due.id);
+      db.prepare(
+        "UPDATE posts SET status='published', x_post_id=?, published_at=?, error=NULL WHERE id=?",
+      ).run(result?.id || null, nowIso(), due.id);
     } catch (error) {
       const message = String(error?.message || error).slice(0, 1500);
       db.prepare("UPDATE posts SET status='failed', error=? WHERE id=?").run(message, due.id);
@@ -103,7 +120,9 @@ export const tick = async () => {
     await queueNextIfNeeded(settings, next);
   } catch (error) {
     console.error('Scheduler tick error:', error);
-    db.prepare('UPDATE settings SET last_error=? WHERE id=1').run(String(error?.message || error).slice(0, 1500));
+    db.prepare('UPDATE settings SET last_error=? WHERE id=1').run(
+      String(error?.message || error).slice(0, 1500),
+    );
   } finally {
     busy = false;
   }
@@ -118,14 +137,21 @@ export const enableSchedule = async () => {
   const next = calculateNextRun(settings);
   db.prepare('UPDATE settings SET enabled=1, next_run_at=?, last_error=NULL WHERE id=1').run(next);
 
-  const recent = db.prepare('SELECT text FROM posts ORDER BY id DESC LIMIT 8').all().map((row) => row.text);
+  const recent = db
+    .prepare('SELECT text FROM posts ORDER BY id DESC LIMIT 8')
+    .all()
+    .map((row) => row.text);
   const text = await generatePost({
     topics: settings.topics,
     tone: settings.tone,
     recentPosts: recent,
   });
 
-  db.prepare("INSERT INTO posts(text,status,scheduled_for) VALUES(?,?,?)").run(text, 'queued', next);
+  db.prepare('INSERT INTO posts(text,status,scheduled_for) VALUES(?,?,?)').run(
+    text,
+    'queued',
+    next,
+  );
   return next;
 };
 

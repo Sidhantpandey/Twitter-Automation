@@ -1,5 +1,11 @@
 import { APP_CONFIG } from '../config/config.js';
-import { db, getSettings, getTodayReplyCount, getLastReplyAt, recordReplyEvent } from '../database/db.js';
+import {
+  db,
+  getSettings,
+  getTodayReplyCount,
+  getLastReplyAt,
+  recordReplyEvent,
+} from '../database/db.js';
 import { generateHumanReply } from '../utils/xaiService.js';
 import { publishReply } from '../utils/xService.js';
 

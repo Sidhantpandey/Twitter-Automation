@@ -1,5 +1,9 @@
-// Central configuration for the app. Keep defaults small and explicit so the
-// project remains easy to audit and safe to operate with X API limits.
+/**
+ * Shared application configuration for the scheduler and API server.
+ *
+ * This project intentionally uses the official X OAuth flow for account
+ * connection and Gemini/OpenAI-compatible models for text generation.
+ */
 export const APP_CONFIG = {
   host: process.env.HOST || '127.0.0.1',
   port: Number(process.env.PORT || 8787),

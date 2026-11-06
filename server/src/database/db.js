@@ -84,7 +84,10 @@ export const getSettings = () => {
     topics: row.topics,
     postsPerDay: Number(row.posts_per_day),
     replyLimitPerDay: Number(row.reply_limit_per_day || 10),
-    scheduleTimes: String(row.schedule_times || '').split(',').map((item) => item.trim()).filter(Boolean),
+    scheduleTimes: String(row.schedule_times || '')
+      .split(',')
+      .map((item) => item.trim())
+      .filter(Boolean),
     timezone: row.timezone,
     tone: row.tone,
     nextRunAt: row.next_run_at,
@@ -93,7 +96,8 @@ export const getSettings = () => {
 };
 
 export const saveSettings = (settings) => {
-  db.prepare(`
+  db.prepare(
+    `
     UPDATE settings
     SET enabled = ?,
         topics = ?,
@@ -103,7 +107,8 @@ export const saveSettings = (settings) => {
         timezone = ?,
         tone = ?
     WHERE id = 1
-  `).run(
+  `,
+  ).run(
     settings.enabled ? 1 : 0,
     settings.topics,
     settings.postsPerDay,
@@ -118,7 +123,9 @@ export const getTodayReplyCount = () => {
   const startOfDay = new Date();
   startOfDay.setHours(0, 0, 0, 0);
 
-  const result = db.prepare('SELECT COUNT(*) AS count FROM reply_log WHERE created_at >= ?').get(startOfDay.toISOString());
+  const result = db
+    .prepare('SELECT COUNT(*) AS count FROM reply_log WHERE created_at >= ?')
+    .get(startOfDay.toISOString());
   return Number(result?.count || 0);
 };
 
@@ -128,8 +135,16 @@ export const getLastReplyAt = () => {
 };
 
 export const recordReplyEvent = ({ tweetId, inReplyToTweetId, text, status = 'published' }) => {
-  db.prepare(`
+  db.prepare(
+    `
     INSERT INTO reply_log(tweet_id, in_reply_to_tweet_id, text, status, created_at)
     VALUES (?, ?, ?, ?, ?)
-  `).run(String(tweetId || ''), String(inReplyToTweetId || ''), String(text || ''), status, new Date().toISOString());
+  `,
+  ).run(
+    String(tweetId || ''),
+    String(inReplyToTweetId || ''),
+    String(text || ''),
+    status,
+    new Date().toISOString(),
+  );
 };

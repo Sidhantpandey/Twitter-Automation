@@ -1,5 +1,3 @@
-// X auth and posting service. The project intentionally avoids browser automation
-// and instead uses the official X API with cautious rate limiting.
 import crypto from 'node:crypto';
 import { db } from '../db.js';
 
@@ -8,7 +6,11 @@ const tokenUrl = 'https://api.x.com/2/oauth2/token';
 const authUrl = 'https://twitter.com/i/oauth2/authorize';
 
 function b64url(buffer) {
-  return Buffer.from(buffer).toString('base64').replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
+  return Buffer.from(buffer)
+    .toString('base64')
+    .replace(/=/g, '')
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_');
 }
 
 export const createPkce = () => {
@@ -25,14 +27,20 @@ export const beginOAuth = () => {
   const { verifier, challenge } = createPkce();
   const state = b64url(crypto.randomBytes(24));
 
-  db.prepare('INSERT INTO oauth_state(state, verifier, created_at) VALUES (?, ?, ?)')
-    .run(state, verifier, Date.now());
+  db.prepare('INSERT INTO oauth_state(state, verifier, created_at) VALUES (?, ?, ?)').run(
+    state,
+    verifier,
+    Date.now(),
+  );
 
   const url = new URL(authUrl);
   url.searchParams.set('response_type', 'code');
   url.searchParams.set('client_id', process.env.X_CLIENT_ID);
   url.searchParams.set('redirect_uri', process.env.X_REDIRECT_URI);
-  url.searchParams.set('scope', process.env.X_SCOPES || 'tweet.read tweet.write users.read offline.access');
+  url.searchParams.set(
+    'scope',
+    process.env.X_SCOPES || 'tweet.read tweet.write users.read offline.access',
+  );
   url.searchParams.set('state', state);
   url.searchParams.set('code_challenge', challenge);
   url.searchParams.set('code_challenge_method', 'S256');
@@ -44,7 +52,9 @@ async function tokenRequest(params) {
   const headers = { 'Content-Type': 'application/x-www-form-urlencoded' };
 
   if (process.env.X_CLIENT_SECRET) {
-    headers.Authorization = 'Basic ' + Buffer.from(`${process.env.X_CLIENT_ID}:${process.env.X_CLIENT_SECRET}`).toString('base64');
+    headers.Authorization =
+      'Basic ' +
+      Buffer.from(`${process.env.X_CLIENT_ID}:${process.env.X_CLIENT_SECRET}`).toString('base64');
   }
 
   const response = await fetch(tokenUrl, {
@@ -93,19 +103,20 @@ export const finishOAuth = async ({ code, state }) => {
   });
 
   const user = await xGet('/users/me', token.access_token);
-  db.prepare(`INSERT INTO oauth_tokens(id, access_token, refresh_token, expires_at, scope, user_id, username, updated_at)
+  db.prepare(
+    `INSERT INTO oauth_tokens(id, access_token, refresh_token, expires_at, scope, user_id, username, updated_at)
     VALUES(1,?,?,?,?,?,?,CURRENT_TIMESTAMP)
     ON CONFLICT(id) DO UPDATE SET access_token=excluded.access_token, refresh_token=excluded.refresh_token,
       expires_at=excluded.expires_at, scope=excluded.scope, user_id=excluded.user_id,
-      username=excluded.username, updated_at=CURRENT_TIMESTAMP`)
-    .run(
-      token.access_token,
-      token.refresh_token || null,
-      token.expires_in ? Date.now() + token.expires_in * 1000 : null,
-      token.scope || '',
-      user?.data?.id || null,
-      user?.data?.username || null,
-    );
+      username=excluded.username, updated_at=CURRENT_TIMESTAMP`,
+  ).run(
+    token.access_token,
+    token.refresh_token || null,
+    token.expires_in ? Date.now() + token.expires_in * 1000 : null,
+    token.scope || '',
+    user?.data?.id || null,
+    user?.data?.username || null,
+  );
 
   return user?.data || {};
 };
@@ -127,13 +138,14 @@ async function getAccessToken() {
       client_id: process.env.X_CLIENT_ID,
     });
 
-    db.prepare(`UPDATE oauth_tokens SET access_token=?, refresh_token=?, expires_at=?, scope=?, updated_at=CURRENT_TIMESTAMP WHERE id=1`)
-      .run(
-        token.access_token,
-        token.refresh_token || row.refresh_token,
-        token.expires_in ? Date.now() + token.expires_in * 1000 : null,
-        token.scope || row.scope,
-      );
+    db.prepare(
+      `UPDATE oauth_tokens SET access_token=?, refresh_token=?, expires_at=?, scope=?, updated_at=CURRENT_TIMESTAMP WHERE id=1`,
+    ).run(
+      token.access_token,
+      token.refresh_token || row.refresh_token,
+      token.expires_in ? Date.now() + token.expires_in * 1000 : null,
+      token.scope || row.scope,
+    );
 
     return token.access_token;
   }
@@ -192,5 +204,7 @@ export const publishReply = async ({ text, inReplyToTweetId }) => {
 
 export const getXAccount = () => {
   const row = db.prepare('SELECT user_id, username FROM oauth_tokens WHERE id=1').get();
-  return row ? { connected: true, userId: row.user_id, username: row.username } : { connected: false };
+  return row
+    ? { connected: true, userId: row.user_id, username: row.username }
+    : { connected: false };
 };

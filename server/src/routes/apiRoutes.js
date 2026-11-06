@@ -1,15 +1,27 @@
 import express from 'express';
-import { generateDraftController, getPostsController } from '../controllers/postController.js';
-import { getSettingsController, updateSettingsController } from '../controllers/settingsController.js';
-import { replyStatsController, publishHumanReplyController } from '../controllers/replyController.js';
+import { getSettings } from '../database/db.js';
+import {
+  generateDraftController,
+  getPostsController,
+  instantPublishController,
+  saveDraftController,
+} from '../controllers/postController.js';
+import {
+  getSettingsController,
+  updateSettingsController,
+} from '../controllers/settingsController.js';
+import {
+  replyStatsController,
+  publishHumanReplyController,
+} from '../controllers/replyController.js';
 import { enableSchedule, disableSchedule } from '../utils/schedulerService.js';
-import { getXAccount } from '../utils/xService.js';
+import { disconnectXAccount, getXAccount } from '../utils/xService.js';
 
 const router = express.Router();
 
 router.get('/status', (_req, res) => {
   res.json({
-    settings: getSettingsController,
+    settings: getSettings(),
     xAccount: getXAccount(),
   });
 });
@@ -17,7 +29,12 @@ router.get('/status', (_req, res) => {
 router.get('/settings', getSettingsController);
 router.put('/settings', updateSettingsController);
 router.post('/generate', generateDraftController);
+router.post('/drafts/:id/save', saveDraftController);
+router.post('/drafts/:id/publish', instantPublishController);
 router.get('/posts', getPostsController);
+router.post('/x/disconnect', (_req, res) => {
+  res.json(disconnectXAccount());
+});
 
 router.get('/replies/stats', replyStatsController);
 router.post('/replies/publish', publishHumanReplyController);

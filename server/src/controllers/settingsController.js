@@ -1,16 +1,42 @@
+/**
+ * Controller helpers for loading and updating the scheduler settings.
+ *
+ * These endpoints manage the user-facing automation preferences. The X OAuth
+ * credentials remain in the separate auth flow, and the AI generation key is
+ * configured independently for Gemini/OpenAI-compatible model calls.
+ */
 import { getSettings, saveSettings } from '../database/db.js';
 
+/**
+ * Read the persisted scheduler settings.
+ *
+ * @param {import('express').Request} _req
+ * @param {import('express').Response} res
+ * @returns {Promise<void>}
+ */
 export const getSettingsController = async (_req, res) => {
   res.json(getSettings());
 };
 
+/**
+ * Validate and persist updated settings for posting cadence and tone.
+ *
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ * @returns {Promise<void>}
+ */
 export const updateSettingsController = async (req, res) => {
   const body = req.body || {};
   const current = getSettings();
+
+  // Validate each input field before writing to SQLite so the scheduler cannot be
+  // configured into an invalid state.
   const topics = String(body.topics ?? current.topics).trim();
   const tone = String(body.tone ?? current.tone).trim();
   const timezone = String(body.timezone ?? current.timezone).trim();
-  const times = Array.isArray(body.scheduleTimes) ? body.scheduleTimes.map(String) : current.scheduleTimes;
+  const times = Array.isArray(body.scheduleTimes)
+    ? body.scheduleTimes.map(String)
+    : current.scheduleTimes;
   const postsPerDay = Number(body.postsPerDay ?? current.postsPerDay);
   const replyLimitPerDay = Number(body.replyLimitPerDay ?? current.replyLimitPerDay ?? 10);
 
@@ -30,7 +56,11 @@ export const updateSettingsController = async (req, res) => {
     return res.status(400).json({ error: 'replyLimitPerDay must be between 1 and 10.' });
   }
 
-  if (!times.length || times.length > 8 || times.some((t) => !/^([01]\d|2[0-3]):[0-5]\d$/.test(t))) {
+  if (
+    !times.length ||
+    times.length > 8 ||
+    times.some((t) => !/^([01]\d|2[0-3]):[0-5]\d$/.test(t))
+  ) {
     return res.status(400).json({ error: 'Schedule times must be valid HH:MM values.' });
   }
 
@@ -38,10 +68,17 @@ export const updateSettingsController = async (req, res) => {
     return res.status(400).json({ error: 'Schedule times must be unique.' });
   }
 
-  const minutes = times.map((t) => Number(t.slice(0, 2)) * 60 + Number(t.slice(3, 5))).sort((a, b) => a - b);
-  if (minutes.some((m, index) => index > 0 && m - minutes[index - 1] < 30) ||
-      (minutes.length > 1 && minutes[0] + 1440 - minutes[minutes.length - 1] < 30)) {
-    return res.status(400).json({ error: 'Scheduled posts must be at least 30 minutes apart, including across midnight.' });
+  const minutes = times
+    .map((t) => Number(t.slice(0, 2)) * 60 + Number(t.slice(3, 5)))
+    .sort((a, b) => a - b);
+
+  if (
+    minutes.some((m, index) => index > 0 && m - minutes[index - 1] < 30) ||
+    (minutes.length > 1 && minutes[0] + 1440 - minutes[minutes.length - 1] < 30)
+  ) {
+    return res.status(400).json({
+      error: 'Scheduled posts must be at least 30 minutes apart, including across midnight.',
+    });
   }
 
   try {
